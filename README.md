@@ -50,6 +50,48 @@ Below is the flow diagram of the agentic process:
 - **Debian GNU/Linux 12 (bookworm)** (dev container)
 - **VS Code Dev Containers** (for reproducible development)
 
+
+## ⚠️ Limitations
+
+### Semantic Mismatch Example
+
+A common failure in SQL-based LLM agents is when the generated SQL is **syntactically valid but semantically wrong**—the query "works" but doesn't match the user's intent.
+
+**Example:**
+```
+[User]: List all users with more than two products in their cart
+
+[SQL generated]:
+SELECT T1.name, T1.email 
+FROM User AS T1 
+JOIN Orders AS T2 ON T1.id = T2.user_id 
+JOIN OrderItem AS T3 ON T2.id = T3.order_id 
+GROUP BY T1.id, T1.name, T1.email 
+HAVING COUNT(DISTINCT T3.product_id) > 2
+```
+❌ **Mismatch with User Intent:**  
+The user asked about the "cart" (implying a temporary, not-yet-ordered selection), but the schema has no cart table. The LLM mapped "cart" to "orders + order_items", which is not what the user meant.
+
+**Why This Didn’t Trigger a Retry:**  
+- The SQL is valid and returns results.
+- The LLM "guessed" the intent, but the answer is semantically different.
+
+### Approaches to Reduce Semantic Hallucinations
+
+1. **LLM-Judge Node**  
+   After generating SQL, an LLM validates if the query makes semantic sense given the schema. `(convert_to_sql → validate_sql_semantics → execute_sql)`
+   - **Pros:** Catches invalid joins/misuse, can prevent bad execution.
+   - **Cons:** LLM still hallucinates first (late catch), extra LLM call per query, needs schema context again.
+
+2. **Retrieval-Augmented Schema Semantics**  
+   Retrieve natural-language explanations of schema/relationships before SQL generation. `user query → retrieve explanations → convert_to_sql → execute_sql`
+   - **Pros:** Helps LLM avoid hallucinations up front, smarter/cheaper prompt, generalizes to new schemas.
+   - **Cons:** Requires maintaining/updating explanation docs, needs vector DB or retriever infra.
+
+**Note:**  
+This project currently does not implement these advanced mitigation strategies, so semantic mismatches may occur in complex or ambiguous queries.
+
+
 ## ⚡ Getting Started
 
 ### 1. Clone the Repository
