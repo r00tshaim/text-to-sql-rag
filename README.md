@@ -31,7 +31,7 @@ This project is an **Agentic Retrieval-Augmented Generation (RAG) system** that 
 
 Below is the flow diagram of the agentic process:
 
-![Agentic Flow](./flow.png)
+![image](https://github.com/user-attachments/assets/a18a0189-817d-4c8a-b280-4598df90bcca)
 
 - The flow starts with a relevance check.
 - If relevant, it proceeds to SQL generation and execution.
